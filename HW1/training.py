@@ -244,7 +244,7 @@ if __name__ == "__main__":
         model = BasicModel(inp_voc, out_voc).to("cpu")
         metrics = train_model(
             model, train_inp, train_out, dev_inp, dev_out,
-            inp_voc, out_voc,
+            inp_voc, out_voc, "cuda", 3000
         )
 
         final_bleu = metrics["dev_bleu"][-1][1]
