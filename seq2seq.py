@@ -50,9 +50,10 @@ class BasicModel(nn.Module):
         """
         prev_gru0_state = prev_state[0]
 
-        # your code here \/
-
-        # your code here /\
+        prev_emb = self.emb_out(prev_tokens)
+        next_gru0_state = self.dec0(prev_emb, prev_gru0_state)
+        output_logits = self.logits(next_gru0_state)
+        new_dec_state = [next_gru0_state]
 
         return new_dec_state, output_logits
 
@@ -94,7 +95,7 @@ class BasicModel(nn.Module):
         inp = self.inp_voc.to_matrix(inp_lines).to(device)
         initial_state = self.encode(inp)
         out_ids, states = self.decode_inference(initial_state, **kwargs)
-        return self.out_voc.to_lines(out_ids.cpu().numpy()), states
+        return self.out_voc.to_lines(out_ids.cpu()), states
 
 
 class AttentionLayer(nn.Module):

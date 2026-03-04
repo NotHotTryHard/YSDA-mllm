@@ -65,6 +65,9 @@ class Vocab:
         :returns: tensor [batch_size, max_len]
         """
 
+        if isinstance(lines, np.ndarray):
+            lines = lines.tolist()
+
         if not lines:
             max_len = max_len or 0
             return torch.empty((0, max_len), dtype=dtype, device=device)
