@@ -27,11 +27,17 @@ def compute_loss(model, inp, out, **flags):
     :returns: average loss scalar
     """
     mask = model.out_voc.compute_mask(out)  # [batch_size, out_len]
-    targets_1hot = F.one_hot(out, len(model.out_voc)).to(torch.float32)
 
-    # your code here \/
+    logits = model(inp, out, **flags)  # [batch_size, out_len, vocab_size]
 
-    # your code here /\
+    batch_size, out_len, vocab_size = logits.shape
+    loss = F.cross_entropy(
+        logits.reshape(batch_size * out_len, vocab_size),
+        out.reshape(batch_size * out_len),
+        reduction='none',
+    ).reshape(batch_size, out_len)  # [batch_size, out_len]
+
+    return (loss * mask).sum() / mask.sum()
 
 
 def compute_bleu(model, inp_lines, out_lines, bpe_sep="@@ ", **flags):
@@ -109,15 +115,28 @@ def train_model(
     """
     os.makedirs(os.path.dirname(plot_save_path), exist_ok=True)
     os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
-    
-    # your code here \/
 
-    # your code here /\
+    model.to(device)
+    optimizer = torch.optim.Adam(model.parameters())
+    metrics = {"train_loss": [], "dev_bleu": []}
+    batch_size = 32
 
     for step in tqdm(range(1, num_steps + 1)):
-        # your code here \/
+        indices = np.random.randint(0, len(train_inp), batch_size)
+        inp_batch = inp_voc.to_matrix(train_inp[indices]).to(device)
+        out_batch = out_voc.to_matrix(train_out[indices]).to(device)
 
-        # your code here /\
+        optimizer.zero_grad()
+        loss = compute_loss(model, inp_batch, out_batch)
+        loss.backward()
+        optimizer.step()
+
+        metrics["train_loss"].append((step, loss.item()))
+
+        if step % eval_interval == 0:
+            with torch.no_grad():
+                bleu = compute_bleu(model, dev_inp[:500], dev_out[:500])
+            metrics["dev_bleu"].append((step, bleu))
 
         if plot_interval > 0 and step % plot_interval == 0:
             _plot_metrics(metrics, step, plot_interval, save_path=plot_save_path)
@@ -125,10 +144,7 @@ def train_model(
         if step % eval_interval == 0 and np.mean(metrics["dev_bleu"][-10:], axis=0)[1] > 10:
             break
 
-    # Save final checkpoint
-    # your code here \/
-
-    # your code here /\
+    torch.save(model.state_dict(), checkpoint_path)
 
     return metrics
 
