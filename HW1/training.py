@@ -241,9 +241,11 @@ if __name__ == "__main__":
         print("Training BasicModel")
         print("=" * 80)
 
-        # your code here \/ 
-
-        # your code here /\
+        model = BasicModel(inp_voc, out_voc).to("cpu")
+        metrics = train_model(
+            model, train_inp, train_out, dev_inp, dev_out,
+            inp_voc, out_voc,
+        )
 
         final_bleu = metrics["dev_bleu"][-1][1]
         print(f"\n✓ BasicModel training complete!")
