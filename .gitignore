@@ -1,0 +1,4 @@
+*data/
+*public_tests/
+
+.DS_Store
