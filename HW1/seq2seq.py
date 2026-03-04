@@ -109,9 +109,9 @@ class AttentionLayer(nn.Module):
         self.hid_size = hid_size
         self.activ = activ
 
-        # your code here \/
-
-        # your code here /\
+        self.Wenc = nn.Linear(enc_size, hid_size)
+        self.Wdec = nn.Linear(dec_size, hid_size)
+        self.bias = nn.Linear(hid_size, 1)
 
     def forward(self, enc, dec, inp_mask):
         """
@@ -121,9 +121,14 @@ class AttentionLayer(nn.Module):
         :param inp_mask: mask on enc activations (0 after first eos), float32[batch_size, ninp]
         :returns: attn[batch_size, enc_size], probs[batch_size, ninp]
         """
-        # your code here \/
+        dec_proj = self.Wdec(dec)
+        enc_proj = self.Wenc(enc)
 
-        # your code here /\
+        scores = self.bias(self.activ(enc_proj + dec_proj.unsqueeze(1))).squeeze(-1)
+        scores[~inp_mask.bool()] = float('-inf')
+        probs = torch.softmax(scores, dim=-1) 
+        attn = (probs.unsqueeze(-1) * enc).sum(dim=1) 
+
         return attn, probs
 
 
