@@ -1,4 +1,5 @@
 *data/
-*public_tests/
+*tests/
 
 .DS_Store
+*.pyc
