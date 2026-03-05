@@ -199,7 +199,8 @@ def train_attentive_model(
             _plot_metrics(metrics, step, plot_interval, save_path=plot_save_path)
 
         if step % eval_interval == 0 and len(metrics["dev_bleu"]) >= 10 and np.mean(metrics["dev_bleu"][-10:], axis=0)[1] > 20:
-            break
+            #break
+            pass
 
     # Save final checkpoint
     torch.save({'model_state_dict': model.state_dict()}, checkpoint_path) 

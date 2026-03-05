@@ -21,8 +21,8 @@ def draw_attention(inp_line, translation, probs, inp_voc, out_voc):
     trans_token_indices = out_voc.tokenize(translation)
     probs = probs[:len(trans_token_indices), :len(inp_token_indices)]
 
-    inp_token_strs = [inp_voc.tokens[idx] for idx in inp_token_indices]
-    trans_token_strs = [out_voc.tokens[idx] for idx in trans_token_indices]
+    inp_token_strs = [list(inp_voc.mapper.keys())[idx] for idx in inp_token_indices]
+    trans_token_strs = [list(out_voc.mapper.keys())[idx] for idx in trans_token_indices]
 
     fig, ax = plt.subplots(figsize=(max(8, len(inp_token_strs) * 0.5), max(6, len(trans_token_strs) * 0.4)))
     
@@ -50,6 +50,8 @@ def extract_attention_probs(attentive_model, dev_inp):
     # Extract attention probabilities from states
     # your code here \/
 
+    attn_probs_list = [state[-1] for state in states[1:]]
+    attention_probs = torch.stack(attn_probs_list, dim=1).cpu().detach().numpy()
     # your code here /\
     
     return attention_probs, trans, inp
