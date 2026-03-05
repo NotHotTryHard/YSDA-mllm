@@ -171,14 +171,29 @@ def train_attentive_model(
     os.makedirs(os.path.dirname(plot_save_path), exist_ok=True)
     os.makedirs(os.path.dirname(checkpoint_path), exist_ok=True)
     
-    # your code here \/
-
-    # your code here /\
+    model.to(device)
+    optimizer = torch.optim.Adam(model.parameters())
+    metrics = {"train_loss": [], "dev_bleu": []}
+    batch_size = 32
 
     for step in tqdm(range(1, num_steps + 1)):
-        # your code here \/
+        indices = np.random.randint(0, len(train_inp), batch_size)
+        inp_batch = inp_voc.to_matrix(train_inp[indices]).to(device)
+        out_batch = out_voc.to_matrix(train_out[indices]).to(device)
+
+        optimizer.zero_grad()
+        loss = compute_loss(model, inp_batch, out_batch)
+        loss.backward()
+        optimizer.step()
+        
+        metrics["train_loss"].append((step, loss.item()))
 
         # your code here /\
+
+        if step % eval_interval == 0:
+            with torch.no_grad():
+                bleu = compute_bleu(model, dev_inp[:500], dev_out[:500])
+            metrics["dev_bleu"].append((step, bleu))
 
         if plot_interval > 0 and step % plot_interval == 0:
             _plot_metrics(metrics, step, plot_interval, save_path=plot_save_path)
@@ -187,9 +202,7 @@ def train_attentive_model(
             break
 
     # Save final checkpoint
-    # your code here \/
-
-    # your code here /\
+    torch.save(model.state_dict(), checkpoint_path)
 
     return metrics
 
@@ -241,7 +254,7 @@ if __name__ == "__main__":
         print("Training BasicModel")
         print("=" * 80)
 
-        model = BasicModel(inp_voc, out_voc).to("cpu")
+        model = BasicModel(inp_voc, out_voc).to("cuda")
         metrics = train_model(
             model, train_inp, train_out, dev_inp, dev_out,
             inp_voc, out_voc, "cuda", 3000
@@ -257,9 +270,11 @@ if __name__ == "__main__":
         print("Training AttentiveModel")
         print("=" * 80)
         
-        # your code here \/ 
-
-        # your code here /\
+        model = AttentiveModel(inp_voc, out_voc).to("cuda")
+        metrics = train_attentive_model(
+            model, train_inp, train_out, dev_inp, dev_out,
+            inp_voc, out_voc, "cuda", 3000
+        )
         
         final_bleu = metrics["dev_bleu"][-1][1]
         print(f"\n✓ AttentiveModel training complete!")
