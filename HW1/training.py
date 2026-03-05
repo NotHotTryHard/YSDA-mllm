@@ -144,7 +144,7 @@ def train_model(
         if step % eval_interval == 0 and np.mean(metrics["dev_bleu"][-10:], axis=0)[1] > 10:
             break
 
-    torch.save(model.state_dict(), checkpoint_path)
+    torch.save({'model_state_dict': model.state_dict()}, checkpoint_path) 
 
     return metrics
 
@@ -202,8 +202,7 @@ def train_attentive_model(
             break
 
     # Save final checkpoint
-    torch.save(model.state_dict(), checkpoint_path)
-
+    torch.save({'model_state_dict': model.state_dict()}, checkpoint_path) 
     return metrics
 
 
@@ -270,7 +269,7 @@ if __name__ == "__main__":
         print("Training AttentiveModel")
         print("=" * 80)
         
-        model = AttentiveModel(inp_voc, out_voc).to("cuda")
+        model = AttentiveModel("attentive", inp_voc, out_voc).to("cuda")
         metrics = train_attentive_model(
             model, train_inp, train_out, dev_inp, dev_out,
             inp_voc, out_voc, "cuda", 3000
