@@ -272,7 +272,7 @@ if __name__ == "__main__":
         model = AttentiveModel("attentive", inp_voc, out_voc).to("cuda")
         metrics = train_attentive_model(
             model, train_inp, train_out, dev_inp, dev_out,
-            inp_voc, out_voc, "cuda", 3000
+            inp_voc, out_voc, "cuda", 30000
         )
         
         final_bleu = metrics["dev_bleu"][-1][1]

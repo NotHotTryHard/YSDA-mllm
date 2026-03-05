@@ -149,7 +149,7 @@ class AttentiveModel(BasicModel):
         self.dec0 = nn.GRUCell(emb_size + 2 * hid_size, hid_size)
         
         self.attn = AttentionLayer("attn", 2 * hid_size, hid_size, attn_size)
-        self.logits = nn.Linear(2 * hid_size, len(out_voc))
+        self.logits = nn.Linear(hid_size + 2 * hid_size, len(out_voc))
 
     def encode(self, inp, **flags):
         """
@@ -190,7 +190,7 @@ class AttentiveModel(BasicModel):
         new_dec = self.dec0(dec_input, prev_dec)
         
         attn, attn_probs = self.attn(enc_seq, new_dec, inp_mask)
-        output_logits = self.logits(attn)
+        output_logits = self.logits(torch.cat([new_dec, attn], dim=-1))
         new_state = [new_dec, enc_seq, inp_mask, attn, attn_probs]
 
         return new_state, output_logits
