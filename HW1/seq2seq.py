@@ -127,7 +127,9 @@ class AttentionLayer(nn.Module):
         scores = self.bias(self.activ(enc_proj + dec_proj.unsqueeze(1))).squeeze(-1)
         scores[~inp_mask.bool()] = float('-inf')
         probs = torch.softmax(scores, dim=-1) 
-        attn = (probs.unsqueeze(-1) * enc).sum(dim=1) 
+        weights = probs.unsqueeze(-1)
+        weighted_enc = weights * enc
+        attn = weighted_enc.sum(dim=1)
 
         return attn, probs
 
@@ -140,9 +142,14 @@ class AttentiveModel(BasicModel):
         self.inp_voc, self.out_voc = inp_voc, out_voc
         self.hid_size = hid_size
 
-        # your code here \/
-
-        # your code here /\
+        self.emb_inp = nn.Embedding(len(inp_voc), emb_size)
+        self.emb_out = nn.Embedding(len(out_voc), emb_size)
+        self.enc0 = nn.GRU(emb_size, hid_size, batch_first=True, bidirectional=True)
+        self.dec_start = nn.Linear(2 * hid_size, hid_size)
+        self.dec0 = nn.GRUCell(emb_size + 2 * hid_size, hid_size)
+        
+        self.attn = AttentionLayer("attn", 2 * hid_size, hid_size, attn_size)
+        self.logits = nn.Linear(2 * hid_size, len(out_voc))
 
     def encode(self, inp, **flags):
         """
@@ -151,22 +158,23 @@ class AttentiveModel(BasicModel):
         :return: a list of initial decoder state tensors
         """
         # Encode input sequence, create initial decoder states
-        # your code here \/
+        inp_emb = self.emb_inp(inp)
+        enc_seq, _ = self.enc0(inp_emb)
 
-        # your code here /\
+        #inp_mask = self.inp_voc.compute_mask(inp)  #  зря писал, лмао
+        inp_mask = (inp != self.inp_voc.eos_idx).float()
+        lengths = inp_mask.to(torch.int64).sum(dim=1).clamp_max(inp.shape[1] - 1)
+        last_state = enc_seq[torch.arange(len(enc_seq)), lengths]
+        dec_start = self.dec_start(last_state)
 
         # Apply attention layer from initial decoder hidden state
-        # your code here \/
-
-        # your code here /\
+        attn, attn_probs = self.attn(enc_seq, dec_start, inp_mask)
 
         # Build first state: include
         # * initial states for decoder recurrent layers
         # * encoder sequence and encoder attn mask (for attention)
         # * make sure that last state item is attention probabilities tensor
-        # your code here \/
-
-        # your code here /\
+        first_state = [dec_start, enc_seq, inp_mask, attn, attn_probs]
         return first_state
 
     def decode_step(self, prev_state, prev_tokens, **flags):
@@ -176,7 +184,13 @@ class AttentiveModel(BasicModel):
         :param prev_tokens: previous output tokens, an int vector of [batch_size]
         :return: a list of next decoder state tensors, a tensor of logits [batch, n_tokens]
         """
-        # your code here \/
+        prev_dec, enc_seq, inp_mask, prev_attn, prev_attn_probs = prev_state
+        prev_emb = self.emb_out(prev_tokens)
+        dec_input = torch.cat([prev_emb, prev_attn], dim=-1)
+        new_dec = self.dec0(dec_input, prev_dec)
+        
+        attn, attn_probs = self.attn(enc_seq, new_dec, inp_mask)
+        output_logits = self.logits(attn)
+        new_state = [new_dec, enc_seq, inp_mask, attn, attn_probs]
 
-        # your code here /\
         return new_state, output_logits
