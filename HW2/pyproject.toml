@@ -1,0 +1,22 @@
+[project]
+name = "hw2"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "chromadb>=1.5.8",
+    "langchain>=0.3.28",
+    "langchain-community>=0.3.21",
+    "langchain-text-splitters>=0.3.11",
+    "numpy<2.0",
+    "pydantic>=2.13.2",
+    "pymupdf>=1.27.2.2",
+    "pytest>=9.0.3",
+    "requests>=2.33.1",
+    "scikit-learn>=1.8.0",
+    "scipy>=1.17.1",
+    "sentence-transformers>=5.4.1",
+    "torch>=2.11.0",
+    "transformers>=5.5.4",
+]
