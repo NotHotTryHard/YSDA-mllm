@@ -3,6 +3,7 @@
 
 .DS_Store
 *.pyc
+.venv/
 
 db/
 HW2/history-of-russia-part-2.pdf
